@@ -1,4 +1,7 @@
 streamlit
+streamlit-webrtc
+av
+sounddevice
 torch
 librosa
 numpy
