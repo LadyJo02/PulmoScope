@@ -203,11 +203,21 @@ if mel is not None:
 
         heatmap = cam.generate(x_tensor, cls_idx)
 
-        fig_cam, ax_cam = plt.subplots(figsize=(6, 3))
-        ax_cam.imshow(heatmap, aspect="auto", origin="lower", cmap="hot")
-        ax_cam.set_title("Grad-CAM: Regions influencing the Pure TCN prediction")
-        ax_cam.axis("off")
-        st.pyplot(fig_cam, clear_figure=True)
+fig_cam, ax_cam = plt.subplots(figsize=(6, 3))
+ax_cam.imshow(
+    heatmap,
+    aspect="auto",
+    origin="lower",
+    cmap="inferno"
+)
+ax_cam.set_title(
+    "Model explanation (Grad-CAM)\nHighlighting time–frequency regions influencing the prediction",
+    fontsize=10
+)
+ax_cam.set_xlabel("Time frames")
+ax_cam.set_ylabel("Feature channels")
+st.pyplot(fig_cam, clear_figure=True)
+
 
 
 # ---------------------------------------------------------
