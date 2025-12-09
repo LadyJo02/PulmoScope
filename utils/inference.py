@@ -3,28 +3,37 @@ import numpy as np
 
 LABELS = ["Normal", "COPD", "Pneumonia"]
 
-# TEMPORARY MOCK LOADER
-def load_model(path="model/pulmonary_cnn.pth"):
+def load_model(path):
+    """
+    Loads a PyTorch model if available.
+    Returns None if missing (mock mode).
+    """
     try:
         model = torch.load(path, map_location=torch.device("cpu"))
         model.eval()
+        print(f"Loaded model: {path}")
         return model
-    except Exception:
-        print("⚠ Model file not found. Using MOCK model for testing.")
+    except Exception as e:
+        print(f"⚠ Model not found ({path}). Using MOCK model.")
         return None
 
 
-# TEMPORARY MOCK PREDICTOR
 def predict(model, mel):
-    # If no model → return fake prediction
+    """
+    Runs prediction.
+    Uses mock prediction if model is None.
+    """
+
+    # MOCK PREDICTION
     if model is None:
         print("⚠ Using mock prediction.")
-        fake_probs = np.array([0.33, 0.33, 0.34])
+        fake_probs = np.array([0.34, 0.33, 0.33])  # Normal, COPD, Pneumonia
         pred = LABELS[np.argmax(fake_probs)]
         return pred, fake_probs
 
-    # REAL INFERENCE (once model is available)
+    # REAL PREDICTION
     x = torch.tensor(mel).unsqueeze(0).unsqueeze(0).float()
+    
     with torch.no_grad():
         logits = model(x)
         prob = torch.softmax(logits, dim=1)[0].numpy()

@@ -11,23 +11,45 @@ st.set_page_config(
     layout="centered"
 )
 
-# Load Header Image
+# Header Image
 st.image("assets/banner.png", use_container_width=True)
 
 st.markdown(
     """
     <h1 style='text-align:center; color:#4A90E2;'>PulmoScope</h1>
     <p style='text-align:center; font-size:18px;'>
-        Upload a lung sound recording and let the AI analyze it.
+        AI-assisted analysis of lung sound recordings.
     </p>
     """,
     unsafe_allow_html=True
 )
 
-# Load Model
-model = load_model("model/pulmonary_cnn.pth")
+# -------------------------
+# MODEL SELECTION
+# -------------------------
+st.subheader("Choose a Model")
 
-uploaded_file = st.file_uploader("Upload a WAV file", type=["wav"])
+model_choice = st.selectbox(
+    "Select a classification model:",
+    (
+        "Pure TCN Model",
+        "Hybrid TCN-SNN Model"
+    )
+)
+
+MODEL_PATHS = {
+    "Pure TCN Model": "models/pure_tcn_weights.pth",
+    "Hybrid TCN-SNN Model": "models/tcn_snn_weights.pth"
+}
+
+model_path = MODEL_PATHS[model_choice]
+model = load_model(model_path)
+
+
+# -------------------------
+# FILE UPLOADER
+# -------------------------
+uploaded_file = st.file_uploader("Upload a lung sound WAV file", type=["wav"])
 
 if uploaded_file:
     st.audio(uploaded_file)

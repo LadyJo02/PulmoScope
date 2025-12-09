@@ -1,0 +1,24 @@
+{
+    "architecture": "Pure TCN",
+    "n_classes": 4,
+    "labels": [
+        "COPD",
+        "Healthy",
+        "Pneumonia",
+        "Other"
+    ],
+    "audio_settings": {
+        "sample_rate": 16000,
+        "duration": 5,
+        "n_mels": 224,
+        "n_mfcc": 40,
+        "n_fft": 2048,
+        "hop_length": 512,
+        "total_input_channels": 264
+    },
+    "model_hyperparameters": {
+        "hidden_dim": 192,
+        "dropout": 0.15,
+        "input_channels": 264
+    }
+}
