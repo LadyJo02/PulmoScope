@@ -2,12 +2,10 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
-import queue
 
 from utils.preprocess import load_audio, create_mel
 from utils.inference import load_model, predict
 from utils.gradcam import GradCAM
-
 
 # =========================================================
 # CONFIG
@@ -15,21 +13,14 @@ from utils.gradcam import GradCAM
 st.set_page_config(
     page_title="PulmoScope",
     page_icon="🫁",
-    layout="wide"
+    layout="wide",
 )
 
 LABELS = ["COPD", "Healthy", "Pneumonia", "Other"]
 
-
-# =========================================================
-# OPTIONAL REALTIME AUDIO
-# =========================================================
-USE_REALTIME = True
-try:
-    from streamlit_webrtc import webrtc_streamer, AudioProcessorBase
-except Exception:
-    USE_REALTIME = False
-
+# Session defaults
+if "mel" not in st.session_state:
+    st.session_state.mel = None
 
 # =========================================================
 # HEADER
@@ -37,8 +28,8 @@ except Exception:
 st.markdown(
     """
     <div style="text-align:center; margin-bottom:28px;">
-        <h1>PulmoScope</h1>
-        <p style="color:#6b7280;">
+        <h1 style="margin-bottom:4px;">PulmoScope</h1>
+        <p style="color:#6b7280; font-size:15px;">
             AI-assisted respiratory disease analysis from lung sound recordings
         </p>
     </div>
@@ -46,16 +37,14 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-
 # =========================================================
 # LOAD MODELS
 # =========================================================
 @st.cache_resource
 def load_models():
-    return (
-        load_model("models/pure_tcn_weights.pth", "tcn"),
-        load_model("models/tcn_snn_weights.pth", "snn"),
-    )
+    pure = load_model("models/pure_tcn_weights.pth", "tcn")
+    snn = load_model("models/tcn_snn_weights.pth", "snn")
+    return pure, snn
 
 
 pure_tcn, tcn_snn = load_models()
@@ -66,7 +55,6 @@ m2.info(f"Hybrid TCN-SNN: {'Loaded' if tcn_snn else 'Failed'}")
 
 st.divider()
 
-
 # =========================================================
 # AUDIO INPUT
 # =========================================================
@@ -74,55 +62,39 @@ st.subheader("Audio Input")
 
 mode = st.radio(
     "Select input method",
-    ["Upload WAV file", "Realtime recording (experimental)"],
+    ["Upload WAV file", "Record from microphone"],
     horizontal=True,
 )
 
 audio = None
 
+# ---------- Upload ----------
 if mode == "Upload WAV file":
     file = st.file_uploader("Upload lung sound (.wav)", type=["wav"])
-    if file:
+    if file is not None:
         st.audio(file)
         audio = load_audio(file)
 
-if mode == "Realtime recording (experimental)":
-    st.caption("Realtime recording may not work on all browsers.")
-
-    if USE_REALTIME:
-        class AudioCollector(AudioProcessorBase):
-            def __init__(self):
-                self.buffer = queue.Queue()
-
-            def recv_audio(self, frame):
-                self.buffer.put(frame.to_ndarray().flatten().astype(np.float32))
-                return frame
-
-        ctx = webrtc_streamer(
-            key="audio",
-            audio_processor_factory=AudioCollector,
-            media_stream_constraints={"audio": True, "video": False},
-            async_processing=True,
-        )
-
-        if ctx.audio_processor and st.button("Use recorded audio"):
-            frames = []
-            while not ctx.audio_processor.buffer.empty():
-                frames.append(ctx.audio_processor.buffer.get())
-
-            if frames:
-                audio = np.concatenate(frames)
-                st.success("Audio captured successfully.")
-
+# ---------- Record ----------
+if mode == "Record from microphone":
+    recorded_audio = st.audio_input("Record lung sound")
+    if recorded_audio is not None:
+        st.audio(recorded_audio)
+        audio = load_audio(recorded_audio)
 
 # =========================================================
 # ANALYSIS
 # =========================================================
-mel = None
-
 if audio is not None and st.button("Analyze recording", type="primary"):
-    mel = create_mel(audio)
+    st.session_state.mel = create_mel(audio)
 
+mel = st.session_state.mel
+
+# Prepare vars for explanation section
+pred_tcn = None
+pred_snn = None
+prob_tcn = None
+prob_snn = None
 
 # =========================================================
 # RESULTS
@@ -134,8 +106,10 @@ if mel is not None:
         st.subheader("Signal Representation")
         fig, ax = plt.subplots(figsize=(5.5, 3.5))
         ax.imshow(mel, aspect="auto", origin="lower", cmap="viridis")
+        ax.set_title("Mel-spectrogram", fontsize=11)
         ax.set_xlabel("Time")
         ax.set_ylabel("Frequency")
+        ax.tick_params(labelsize=8)
         st.pyplot(fig, clear_figure=True)
 
     with right:
@@ -153,10 +127,12 @@ if mel is not None:
             with col:
                 st.markdown(f"**{title}**")
                 st.markdown(f"Prediction: **{pred}**")
-                for l, p in zip(LABELS, prob):
-                    st.write(f"{l}: {p*100:.1f}%")
+                for label, p in zip(LABELS, prob):
+                    st.write(f"{label}: {p * 100:.1f}%")
                     st.progress(float(p))
 
+else:
+    st.caption("Upload or record audio, then click Analyze recording.")
 
 # =========================================================
 # EXPLANATION (SIDE-BY-SIDE)
@@ -164,39 +140,46 @@ if mel is not None:
 st.divider()
 
 with st.expander("Model explanation (input + attention comparison)"):
-    if mel is not None and pure_tcn and tcn_snn:
+    if mel is not None and pure_tcn is not None and tcn_snn is not None and pred_tcn is not None:
         try:
             x = torch.tensor(mel).unsqueeze(0).float()
 
             cam_tcn = GradCAM(pure_tcn)
             cam_snn = GradCAM(tcn_snn)
 
-            heat_tcn = cam_tcn.generate(x, LABELS.index(pred_tcn))
-            heat_snn = cam_snn.generate(x, LABELS.index(pred_snn))
+            cls_idx_tcn = LABELS.index(pred_tcn) if pred_tcn in LABELS else 0
+            cls_idx_snn = LABELS.index(pred_snn) if pred_snn in LABELS else 0
+
+            heat_tcn = cam_tcn.generate(x, cls_idx_tcn)
+            heat_snn = cam_snn.generate(x, cls_idx_snn)
 
             c1, c2, c3 = st.columns(3)
 
             with c1:
                 fig, ax = plt.subplots(figsize=(4, 3))
                 ax.imshow(mel, aspect="auto", cmap="viridis", origin="lower")
-                ax.set_title("Input Mel")
+                ax.set_title("Input Mel", fontsize=10)
+                ax.tick_params(labelsize=8)
                 st.pyplot(fig, clear_figure=True)
 
             with c2:
                 fig, ax = plt.subplots(figsize=(4, 3))
                 ax.imshow(heat_tcn, aspect="auto", cmap="inferno", origin="lower")
-                ax.set_title("Pure TCN Attention")
+                ax.set_title("Pure TCN Attention", fontsize=10)
+                ax.tick_params(labelsize=8)
                 st.pyplot(fig, clear_figure=True)
 
             with c3:
                 fig, ax = plt.subplots(figsize=(4, 3))
                 ax.imshow(heat_snn, aspect="auto", cmap="inferno", origin="lower")
-                ax.set_title("Hybrid TCN-SNN Attention")
+                ax.set_title("Hybrid TCN-SNN Attention", fontsize=10)
+                ax.tick_params(labelsize=8)
                 st.pyplot(fig, clear_figure=True)
 
-        except Exception as e:
+        except Exception:
             st.warning("Model explanation unavailable for this sample.")
-
+    else:
+        st.info("Run analysis first to view model explanations.")
 
 # =========================================================
 # RESET
@@ -205,7 +188,6 @@ st.divider()
 if st.button("Analyze another recording"):
     st.session_state.clear()
     st.rerun()
-
 
 # =========================================================
 # FOOTER
