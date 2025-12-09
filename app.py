@@ -16,7 +16,7 @@ st.image("assets/banner.png", use_container_width=True)
 
 st.markdown(
     """
-    <h1 style='text-align:center; color:#4A90E2;'>PulmoScope</h1>
+    <h1 style='text-align:center; color:#123C4C;'>PulmoScope</h1>
     <p style='text-align:center; font-size:18px;'>
         AI-assisted analysis of lung sound recordings.
     </p>
