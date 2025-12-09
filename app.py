@@ -165,7 +165,7 @@ if mel is not None:
         if pure_tcn is None and tcn_snn is None:
             st.error("Models failed to load. Please check the weights in the models folder.")
         else:
-            labels = ["Normal", "COPD", "Pneumonia", "Other"]
+            LABELS = ["COPD", "Healthy", "Pneumonia", "Other"]
 
             pred_tcn, prob_tcn = predict(pure_tcn, mel) if pure_tcn else ("Model not loaded", np.zeros(4))
             pred_snn, prob_snn = predict(tcn_snn, mel) if tcn_snn else ("Model not loaded", np.zeros(4))
@@ -186,35 +186,77 @@ if mel is not None:
                     st.write(f"{l}: {p*100:.1f}%")
                     st.progress(float(p))
 
-# -----------------------------------------------------
-# GRAD-CAM EXPLANATION (Pure TCN)
-# -----------------------------------------------------
+# ---------------------------------------------------------
+# MODEL EXPLANATION (INPUT + GRAD-CAM COMPARISON)
+# ---------------------------------------------------------
 st.divider()
-show_cam = st.checkbox("Show explanation (Grad-CAM for Pure TCN)")
 
-if show_cam and pure_tcn is not None:
-    x_tensor = torch.tensor(mel).unsqueeze(0).float()
-    cam = GradCAM(pure_tcn)
+with st.expander("Model explanation (Input & attention comparison)", expanded=False):
 
-    labels = ["Normal", "COPD", "Pneumonia", "Other"]
-    cls_idx = labels.index(pred_tcn) if pred_tcn in labels else 0
+    if mel is not None and pure_tcn is not None and tcn_snn is not None:
 
-    heatmap = cam.generate(x_tensor, cls_idx)
+        LABELS = ["COPD", "Healthy", "Pneumonia", "Other"]
 
-    fig_cam, ax_cam = plt.subplots(figsize=(6, 3))
-    ax_cam.imshow(
-        heatmap,
-        aspect="auto",
-        origin="lower",
-        cmap="inferno"
-    )
-    ax_cam.set_title(
-        "Model explanation (Grad-CAM)\nRegions influencing the prediction",
-        fontsize=10
-    )
-    ax_cam.set_xlabel("Time frames")
-    ax_cam.set_ylabel("Feature channels")
-    st.pyplot(fig_cam, clear_figure=True)
+        # Predictions (already computed earlier, reused safely)
+        cls_idx_tcn = LABELS.index(pred_tcn)
+        cls_idx_snn = LABELS.index(pred_snn)
+
+        x_tensor = torch.tensor(mel).unsqueeze(0).float()
+
+        cam_tcn = GradCAM(pure_tcn)
+        cam_snn = GradCAM(tcn_snn)
+
+        heatmap_tcn = cam_tcn.generate(x_tensor, cls_idx_tcn)
+        heatmap_snn = cam_snn.generate(x_tensor, cls_idx_snn)
+
+        col1, col2, col3 = st.columns([1.2, 1, 1])
+
+        # --- Input Mel ---
+        with col1:
+            fig, ax = plt.subplots(figsize=(4, 3))
+            ax.imshow(mel, aspect="auto", origin="lower", cmap="viridis")
+            ax.set_title("Input: Mel-spectrogram", fontsize=10)
+            ax.set_xlabel("Time")
+            ax.set_ylabel("Frequency")
+            ax.tick_params(labelsize=8)
+            st.pyplot(fig, clear_figure=True)
+
+        # --- Pure TCN CAM ---
+        with col2:
+            fig, ax = plt.subplots(figsize=(4, 3))
+            ax.imshow(
+                heatmap_tcn,
+                aspect="auto",
+                origin="lower",
+                cmap="inferno",
+                vmin=0,
+                vmax=1,
+            )
+            ax.set_title("Pure TCN — Grad-CAM", fontsize=10)
+            ax.set_xlabel("Time")
+            ax.set_ylabel("Features")
+            ax.tick_params(labelsize=8)
+            st.pyplot(fig, clear_figure=True)
+
+        # --- Hybrid TCN-SNN CAM ---
+        with col3:
+            fig, ax = plt.subplots(figsize=(4, 3))
+            ax.imshow(
+                heatmap_snn,
+                aspect="auto",
+                origin="lower",
+                cmap="inferno",
+                vmin=0,
+                vmax=1,
+            )
+            ax.set_title("Hybrid TCN-SNN — Grad-CAM", fontsize=10)
+            ax.set_xlabel("Time")
+            ax.set_ylabel("Features")
+            ax.tick_params(labelsize=8)
+            st.pyplot(fig, clear_figure=True)
+
+    else:
+        st.info("Run analysis first to view model explanations.")
 
 
 # ---------------------------------------------------------

@@ -3,7 +3,8 @@ import json
 import numpy as np
 from utils.architectures import Model_Pure_TCN, Model_TCN_SNN
 
-LABELS = ["Normal", "COPD", "Pneumonia", "Other"]
+# utils/inference.py
+LABELS = ["COPD", "Healthy", "Pneumonia", "Other"]
 
 
 def load_model(weight_path: str, model_type: str):
