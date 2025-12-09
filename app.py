@@ -186,38 +186,35 @@ if mel is not None:
                     st.write(f"{l}: {p*100:.1f}%")
                     st.progress(float(p))
 
-    # -----------------------------------------------------
-    # GRAD-CAM EXPLANATION (Pure TCN)
-    # -----------------------------------------------------
-    st.divider()
-    show_cam = st.checkbox("Show explanation (Grad-CAM for Pure TCN)")
+# -----------------------------------------------------
+# GRAD-CAM EXPLANATION (Pure TCN)
+# -----------------------------------------------------
+st.divider()
+show_cam = st.checkbox("Show explanation (Grad-CAM for Pure TCN)")
 
-    if show_cam and pure_tcn is not None:
-        # Build tensor in the format expected by GradCAM: (1, C, T)
-        x_tensor = torch.tensor(mel).unsqueeze(0).float()
-        cam = GradCAM(pure_tcn)
+if show_cam and pure_tcn is not None:
+    x_tensor = torch.tensor(mel).unsqueeze(0).float()
+    cam = GradCAM(pure_tcn)
 
-        # Use predicted class index from Pure TCN
-        labels = ["Normal", "COPD", "Pneumonia", "Other"]
-        cls_idx = labels.index(pred_tcn) if pred_tcn in labels else 0
+    labels = ["Normal", "COPD", "Pneumonia", "Other"]
+    cls_idx = labels.index(pred_tcn) if pred_tcn in labels else 0
 
-        heatmap = cam.generate(x_tensor, cls_idx)
+    heatmap = cam.generate(x_tensor, cls_idx)
 
-fig_cam, ax_cam = plt.subplots(figsize=(6, 3))
-ax_cam.imshow(
-    heatmap,
-    aspect="auto",
-    origin="lower",
-    cmap="inferno"
-)
-ax_cam.set_title(
-    "Model explanation (Grad-CAM)\nHighlighting time–frequency regions influencing the prediction",
-    fontsize=10
-)
-ax_cam.set_xlabel("Time frames")
-ax_cam.set_ylabel("Feature channels")
-st.pyplot(fig_cam, clear_figure=True)
-
+    fig_cam, ax_cam = plt.subplots(figsize=(6, 3))
+    ax_cam.imshow(
+        heatmap,
+        aspect="auto",
+        origin="lower",
+        cmap="inferno"
+    )
+    ax_cam.set_title(
+        "Model explanation (Grad-CAM)\nRegions influencing the prediction",
+        fontsize=10
+    )
+    ax_cam.set_xlabel("Time frames")
+    ax_cam.set_ylabel("Feature channels")
+    st.pyplot(fig_cam, clear_figure=True)
 
 
 # ---------------------------------------------------------
