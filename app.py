@@ -49,11 +49,19 @@ def load_models():
     snn  = load_model("models/tcn_snn_weights.pth", model_type="snn")
     return pure, snn
 
+
 pure_tcn, tcn_snn = load_models()
 
 c1, c2 = st.columns(2)
-c1.success("Pure TCN Loaded")
-c2.success("Hybrid TCN-SNN Loaded")
+if pure_tcn is not None:
+    c1.success("✅ Pure TCN Loaded")
+else:
+    c1.error("❌ Failed to load Pure TCN model")
+
+if tcn_snn is not None:
+    c2.success("✅ Hybrid TCN-SNN Loaded")
+else:
+    c2.error("❌ Failed to load Hybrid TCN-SNN model")
 
 st.divider()
 
@@ -126,24 +134,27 @@ with right:
     if mel is not None:
         st.subheader("Model Comparison")
 
-        pred_tcn, prob_tcn = predict(pure_tcn, mel)
-        pred_snn, prob_snn = predict(tcn_snn, mel)
+        if pure_tcn is None and tcn_snn is None:
+            st.error("Models failed to load – please check the weights in /models.")
+        else:
+            pred_tcn, prob_tcn = predict(pure_tcn, mel)
+            pred_snn, prob_snn = predict(tcn_snn, mel)
 
-        labels = ["Normal", "COPD", "Pneumonia", "Other"]
+            labels = ["Normal", "COPD", "Pneumonia", "Other"]
 
-        a, b = st.columns(2)
+            a, b = st.columns(2)
 
-        with a:
-            st.markdown("### Pure TCN")
-            st.success(pred_tcn)
-            for l, p in zip(labels, prob_tcn):
-                st.write(f"{l}: {p*100:.1f}%")
+            with a:
+                st.markdown("### Pure TCN")
+                st.success(pred_tcn)
+                for l, p in zip(labels, prob_tcn):
+                    st.write(f"{l}: {p*100:.1f}%")
 
-        with b:
-            st.markdown("### Hybrid TCN-SNN")
-            st.success(pred_snn)
-            for l, p in zip(labels, prob_snn):
-                st.write(f"{l}: {p*100:.1f}%")
+            with b:
+                st.markdown("### Hybrid TCN-SNN")
+                st.success(pred_snn)
+                for l, p in zip(labels, prob_snn):
+                    st.write(f"{l}: {p*100:.1f}%")
 
 # =========================================================
 # FOOTER
