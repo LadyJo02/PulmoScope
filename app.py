@@ -1,14 +1,17 @@
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
+import torch
 import queue
 
 from utils.preprocess import load_audio, create_mel
 from utils.inference import load_model, predict
+from utils.gradcam import GradCAM
 
-# =========================================================
-# OPTIONAL REALTIME (SAFE IMPORT)
-# =========================================================
+
+# ---------------------------------------------------------
+# Optional realtime audio (may not work on all deployments)
+# ---------------------------------------------------------
 USE_REALTIME = True
 try:
     from streamlit_webrtc import webrtc_streamer, AudioProcessorBase
@@ -16,156 +19,216 @@ except Exception:
     USE_REALTIME = False
 
 
-# =========================================================
+# ---------------------------------------------------------
 # PAGE CONFIG
-# =========================================================
+# ---------------------------------------------------------
 st.set_page_config(
     page_title="PulmoScope",
-    page_icon="🫁",
     layout="wide"
 )
 
-# =========================================================
-# HEADER
-# =========================================================
-st.image("assets/banner.png", use_container_width=True)
-
+# ---------------------------------------------------------
+# TITLE / HEADER
+# ---------------------------------------------------------
 st.markdown(
     """
-    <h1 style='text-align:center; color:#123C4C;'>PULMOSCOPE</h1>
-    <p style='text-align:center; font-size:18px;'>
-        AI-assisted respiratory disease analysis
-    </p>
+    <div style="text-align:center; margin-bottom:40px;">
+        <h1 style="margin-bottom:8px;">PulmoScope</h1>
+        <p style="color:#6b7280; font-size:16px;">
+            AI-assisted respiratory disease analysis from lung sound recordings
+        </p>
+    </div>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
-# =========================================================
-# LOAD MODELS (REAL MODELS ONLY)
-# =========================================================
+# ---------------------------------------------------------
+# LOAD MODELS
+# ---------------------------------------------------------
 @st.cache_resource
 def load_models():
     pure = load_model("models/pure_tcn_weights.pth", model_type="tcn")
-    snn  = load_model("models/tcn_snn_weights.pth", model_type="snn")
+    snn = load_model("models/tcn_snn_weights.pth", model_type="snn")
     return pure, snn
 
 
 pure_tcn, tcn_snn = load_models()
 
-c1, c2 = st.columns(2)
-if pure_tcn is not None:
-    c1.success("✅ Pure TCN Loaded")
-else:
-    c1.error("❌ Failed to load Pure TCN model")
-
-if tcn_snn is not None:
-    c2.success("✅ Hybrid TCN-SNN Loaded")
-else:
-    c2.error("❌ Failed to load Hybrid TCN-SNN model")
+status_left, status_right = st.columns(2)
+status_left.info(
+    "Model: Pure TCN\n\nStatus: {}".format("Loaded" if pure_tcn else "Failed")
+)
+status_right.info(
+    "Model: Hybrid TCN-SNN\n\nStatus: {}".format("Loaded" if tcn_snn else "Failed")
+)
 
 st.divider()
 
-# =========================================================
-# OPTIONAL REALTIME AUDIO (DISABLED ON CLOUD)
-# =========================================================
-if USE_REALTIME:
-    class AudioCollector(AudioProcessorBase):
-        def __init__(self):
-            self.buffer = queue.Queue()
+# ---------------------------------------------------------
+# AUDIO INPUT SECTION
+# ---------------------------------------------------------
+st.subheader("Audio Input")
 
-        def recv_audio(self, frame):
-            audio = frame.to_ndarray().flatten().astype(np.float32)
-            self.buffer.put(audio)
-            return frame
+input_mode = st.radio(
+    "Select input method",
+    ["Upload WAV file", "Realtime recording (experimental)"],
+    horizontal=True,
+)
 
-    with st.expander("🎙 Realtime Audio (Experimental)"):
+audio = None  # raw waveform (numpy array)
+
+
+# ---------- Upload mode ----------
+if input_mode == "Upload WAV file":
+    uploaded_file = st.file_uploader(
+        "Upload lung sound recording (.wav)",
+        type=["wav"],
+        key="uploader",
+    )
+
+    if uploaded_file is not None:
+        st.audio(uploaded_file)
+        audio = load_audio(uploaded_file)
+
+
+# ---------- Realtime mode ----------
+if input_mode == "Realtime recording (experimental)":
+    st.info(
+        "Realtime recording may not be supported on all browsers or cloud deployments. "
+        "If recording does not work, please use WAV upload instead."
+    )
+
+    if USE_REALTIME:
+        class AudioCollector(AudioProcessorBase):
+            def __init__(self):
+                self.buffer = queue.Queue()
+
+            def recv_audio(self, frame):
+                arr = frame.to_ndarray().flatten().astype(np.float32)
+                self.buffer.put(arr)
+                return frame
+
         ctx = webrtc_streamer(
             key="pulmoscope-audio",
             audio_processor_factory=AudioCollector,
             media_stream_constraints={"audio": True, "video": False},
-            async_processing=True
+            async_processing=True,
         )
 
-        if ctx.audio_processor and st.button("Analyze Realtime Audio"):
+        if ctx.audio_processor and st.button("Use recorded audio"):
             frames = []
             while not ctx.audio_processor.buffer.empty():
                 frames.append(ctx.audio_processor.buffer.get())
 
-            if len(frames) > 0:
+            if frames:
                 audio = np.concatenate(frames)
-                mel = create_mel(audio)
-                st.success("Realtime audio captured.")
+                st.success("Audio captured successfully.")
             else:
-                st.warning("No audio detected.")
-else:
-    st.info("🎙 Realtime recording is disabled on Streamlit Cloud.")
+                st.error("No audio detected. Please try recording again.")
+    else:
+        st.error("Realtime recording is not available in this environment.")
 
-# =========================================================
-# MAIN UI – SINGLE SCREEN
-# =========================================================
-left, right = st.columns([1, 1])
+
+# ---------------------------------------------------------
+# ANALYSIS TRIGGER
+# ---------------------------------------------------------
 mel = None
 
-# -------------------------
-# LEFT: INPUT + SPECTROGRAM
-# -------------------------
-with left:
-    st.subheader("Input")
-
-    uploaded_file = st.file_uploader(
-        "Upload lung sound recording (WAV)",
-        type=["wav"]
-    )
-
-    if uploaded_file:
-        st.audio(uploaded_file)
-        audio = load_audio(uploaded_file)
+if audio is not None:
+    st.divider()
+    if st.button("Analyze recording", type="primary"):
         mel = create_mel(audio)
+else:
+    st.caption("Upload or record audio, then click Analyze recording.")
 
-        fig, ax = plt.subplots(figsize=(5, 3))
+
+# ---------------------------------------------------------
+# RESULTS: SPECTROGRAM + MODEL COMPARISON
+# ---------------------------------------------------------
+if mel is not None:
+    left_col, right_col = st.columns([1.1, 0.9])
+
+    # --- Left: Mel spectrogram ---
+    with left_col:
+        st.subheader("Representation")
+        fig, ax = plt.subplots(figsize=(6, 4))
         ax.imshow(mel, origin="lower", aspect="auto", cmap="viridis")
-        ax.set_title("Mel-Spectrogram")
+        ax.set_title("Mel-spectrogram")
+        ax.set_xlabel("Time frames")
+        ax.set_ylabel("Frequency bins")
         st.pyplot(fig, clear_figure=True)
 
-# -------------------------
-# RIGHT: MODEL COMPARISON
-# -------------------------
-with right:
-    if mel is not None:
+    # --- Right: Predictions ---
+    with right_col:
         st.subheader("Model Comparison")
 
         if pure_tcn is None and tcn_snn is None:
-            st.error("Models failed to load – please check the weights in /models.")
+            st.error("Models failed to load. Please check the weights in the models folder.")
         else:
-            pred_tcn, prob_tcn = predict(pure_tcn, mel)
-            pred_snn, prob_snn = predict(tcn_snn, mel)
-
             labels = ["Normal", "COPD", "Pneumonia", "Other"]
 
-            a, b = st.columns(2)
+            pred_tcn, prob_tcn = predict(pure_tcn, mel) if pure_tcn else ("Model not loaded", np.zeros(4))
+            pred_snn, prob_snn = predict(tcn_snn, mel) if tcn_snn else ("Model not loaded", np.zeros(4))
 
-            with a:
-                st.markdown("### Pure TCN")
-                st.success(pred_tcn)
+            col_a, col_b = st.columns(2)
+
+            with col_a:
+                st.markdown("**Pure TCN**")
+                st.markdown(f"Prediction: **{pred_tcn}**")
                 for l, p in zip(labels, prob_tcn):
                     st.write(f"{l}: {p*100:.1f}%")
+                    st.progress(float(p))
 
-            with b:
-                st.markdown("### Hybrid TCN-SNN")
-                st.success(pred_snn)
+            with col_b:
+                st.markdown("**Hybrid TCN-SNN**")
+                st.markdown(f"Prediction: **{pred_snn}**")
                 for l, p in zip(labels, prob_snn):
                     st.write(f"{l}: {p*100:.1f}%")
+                    st.progress(float(p))
 
-# =========================================================
-# FOOTER
-# =========================================================
+    # -----------------------------------------------------
+    # GRAD-CAM EXPLANATION (Pure TCN)
+    # -----------------------------------------------------
+    st.divider()
+    show_cam = st.checkbox("Show explanation (Grad-CAM for Pure TCN)")
+
+    if show_cam and pure_tcn is not None:
+        # Build tensor in the format expected by GradCAM: (1, C, T)
+        x_tensor = torch.tensor(mel).unsqueeze(0).float()
+        cam = GradCAM(pure_tcn)
+
+        # Use predicted class index from Pure TCN
+        labels = ["Normal", "COPD", "Pneumonia", "Other"]
+        cls_idx = labels.index(pred_tcn) if pred_tcn in labels else 0
+
+        heatmap = cam.generate(x_tensor, cls_idx)
+
+        fig_cam, ax_cam = plt.subplots(figsize=(6, 3))
+        ax_cam.imshow(heatmap, aspect="auto", origin="lower", cmap="hot")
+        ax_cam.set_title("Grad-CAM: Regions influencing the Pure TCN prediction")
+        ax_cam.axis("off")
+        st.pyplot(fig_cam, clear_figure=True)
+
+
+# ---------------------------------------------------------
+# RESET BUTTON
+# ---------------------------------------------------------
 st.divider()
+if st.button("Analyze another recording"):
+    # Clear session state and rerun
+    for k in list(st.session_state.keys()):
+        del st.session_state[k]
+    st.experimental_rerun()
+
+# ---------------------------------------------------------
+# FOOTER
+# ---------------------------------------------------------
 st.markdown(
     """
-    <p style='text-align:center; color:gray; font-size:12px;'>
+    <div style="text-align:center; margin-top:40px; color:#9ca3af; font-size:12px;">
         PulmoScope © 2025<br>
-        Academic Prototype – Not a Medical Device
-    </p>
+        Academic prototype — not a medical device
+    </div>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
