@@ -1,13 +1,20 @@
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
+import queue
 
 from utils.preprocess import load_audio, create_mel
 from utils.inference import load_model, predict
 
-from streamlit_webrtc import webrtc_streamer, AudioProcessorBase
-import sounddevice as sd
-import queue
+# =========================================================
+# OPTIONAL REALTIME (SAFE IMPORT)
+# =========================================================
+USE_REALTIME = True
+try:
+    from streamlit_webrtc import webrtc_streamer, AudioProcessorBase
+except Exception:
+    USE_REALTIME = False
+
 
 # =========================================================
 # PAGE CONFIG
@@ -34,7 +41,7 @@ st.markdown(
 )
 
 # =========================================================
-# LOAD MODELS (REAL – NO MOCK)
+# LOAD MODELS (REAL MODELS ONLY)
 # =========================================================
 @st.cache_resource
 def load_models():
@@ -44,48 +51,52 @@ def load_models():
 
 pure_tcn, tcn_snn = load_models()
 
-status_col1, status_col2 = st.columns(2)
-status_col1.success("✅ Pure TCN loaded")
-status_col2.success("✅ Hybrid TCN-SNN loaded")
+c1, c2 = st.columns(2)
+c1.success("Pure TCN Loaded")
+c2.success("Hybrid TCN-SNN Loaded")
 
 st.divider()
 
 # =========================================================
-# REALTIME AUDIO (OPTIONAL – SAFE IMPLEMENTATION)
+# OPTIONAL REALTIME AUDIO (DISABLED ON CLOUD)
 # =========================================================
-class AudioCollector(AudioProcessorBase):
-    def __init__(self):
-        self.buffer = queue.Queue()
+if USE_REALTIME:
+    class AudioCollector(AudioProcessorBase):
+        def __init__(self):
+            self.buffer = queue.Queue()
 
-    def recv_audio(self, frame):
-        audio = frame.to_ndarray().flatten().astype(np.float32)
-        self.buffer.put(audio)
-        return frame
+        def recv_audio(self, frame):
+            audio = frame.to_ndarray().flatten().astype(np.float32)
+            self.buffer.put(audio)
+            return frame
 
-with st.expander("🎙 Realtime Recording (Optional)"):
-    ctx = webrtc_streamer(
-        key="pulmoscope-audio",
-        audio_processor_factory=AudioCollector,
-        media_stream_constraints={"audio": True, "video": False},
-        async_processing=True
-    )
+    with st.expander("🎙 Realtime Audio (Experimental)"):
+        ctx = webrtc_streamer(
+            key="pulmoscope-audio",
+            audio_processor_factory=AudioCollector,
+            media_stream_constraints={"audio": True, "video": False},
+            async_processing=True
+        )
 
-    if ctx.audio_processor and st.button("Analyze Realtime Audio"):
-        frames = []
-        while not ctx.audio_processor.buffer.empty():
-            frames.append(ctx.audio_processor.buffer.get())
+        if ctx.audio_processor and st.button("Analyze Realtime Audio"):
+            frames = []
+            while not ctx.audio_processor.buffer.empty():
+                frames.append(ctx.audio_processor.buffer.get())
 
-        if len(frames) == 0:
-            st.warning("No audio captured.")
-        else:
-            audio = np.concatenate(frames)
-            mel = create_mel(audio)
-            st.success("Realtime audio captured ✅")
+            if len(frames) > 0:
+                audio = np.concatenate(frames)
+                mel = create_mel(audio)
+                st.success("Realtime audio captured.")
+            else:
+                st.warning("No audio detected.")
+else:
+    st.info("🎙 Realtime recording is disabled on Streamlit Cloud.")
 
 # =========================================================
 # MAIN UI – SINGLE SCREEN
 # =========================================================
 left, right = st.columns([1, 1])
+mel = None
 
 # -------------------------
 # LEFT: INPUT + SPECTROGRAM
@@ -98,19 +109,14 @@ with left:
         type=["wav"]
     )
 
-    mel = None
-
     if uploaded_file:
         st.audio(uploaded_file)
         audio = load_audio(uploaded_file)
         mel = create_mel(audio)
 
-    if mel is not None:
         fig, ax = plt.subplots(figsize=(5, 3))
         ax.imshow(mel, origin="lower", aspect="auto", cmap="viridis")
         ax.set_title("Mel-Spectrogram")
-        ax.set_xlabel("Time")
-        ax.set_ylabel("Frequency")
         st.pyplot(fig, clear_figure=True)
 
 # -------------------------
@@ -123,19 +129,19 @@ with right:
         pred_tcn, prob_tcn = predict(pure_tcn, mel)
         pred_snn, prob_snn = predict(tcn_snn, mel)
 
-        colA, colB = st.columns(2)
-
         labels = ["Normal", "COPD", "Pneumonia", "Other"]
 
-        with colA:
+        a, b = st.columns(2)
+
+        with a:
             st.markdown("### Pure TCN")
-            st.success(f"Prediction: **{pred_tcn}**")
+            st.success(pred_tcn)
             for l, p in zip(labels, prob_tcn):
                 st.write(f"{l}: {p*100:.1f}%")
 
-        with colB:
+        with b:
             st.markdown("### Hybrid TCN-SNN")
-            st.success(f"Prediction: **{pred_snn}**")
+            st.success(pred_snn)
             for l, p in zip(labels, prob_snn):
                 st.write(f"{l}: {p*100:.1f}%")
 

@@ -11,16 +11,12 @@ It enables automated classification of respiratory conditions using **Temporal C
 
 ## 🚀 Features
 
-✅ Upload lung sound recordings (`.wav`)  
-✅ Optional **real-time audio recording** via microphone  
-✅ Compare **two deep-learning models side-by-side**  
-✅ Mel-spectrogram visualization  
-✅ Multi-class prediction:
-- Normal
-- COPD
-- Pneumonia
-- Other Respiratory Conditions  
-✅ Streamlit-based UI (deployable on Streamlit Cloud)  
+- Upload lung sound recordings (`.wav`)  
+- Optional **real-time audio recording** via microphone  
+- Compare **two deep-learning models side-by-side**  
+- Mel-spectrogram visualization  
+- Multi-class prediction: Normal, COPD, Pneumonia, Other Respiratory Conditions  
+- Streamlit-based UI (deployable on Streamlit Cloud)  
 
 ---
 
