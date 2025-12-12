@@ -3,6 +3,7 @@
 ![Streamlit](https://img.shields.io/badge/Framework-Streamlit-FF4B4B)
 ![Deep Learning](https://img.shields.io/badge/AI-TCN%20%7C%20TCN--SNN-green)
 ![License](https://img.shields.io/badge/License-Academic-lightgrey)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 ### Live Demo: https://pulmoscope.streamlit.app/
 ## Full Manuscript
