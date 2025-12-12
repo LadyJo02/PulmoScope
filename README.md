@@ -205,3 +205,5 @@ PulmoScope was developed by:
 ## 10. License
 
 This project is intended solely for academic research and educational purposes. It is not approved for clinical use.
+
+This project is open source and available under the [MIT License](LICENSE).
