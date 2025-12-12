@@ -7,7 +7,7 @@
 ### Live Demo: https://pulmoscope.streamlit.app/
 ## Full Manuscript
 Access the complete research manuscript here:  
-https://drive.google.com/file/d/1jdyt_dUKNHwU3iAuXgVqrGp3nJFp7U7S/view?usp=sharing
+https://tinyurl.com/pulmoscope
 
 PulmoScope is a **deep-learning powered assistive tool** developed to analyze **lung auscultation sounds** and classify respiratory conditions including Healthy, COPD, Pneumonia, and Other abnormalities. It implements two temporal AI architectures:
 
@@ -56,10 +56,17 @@ The experimental process involves architecture comparison, hyperparameter tuning
 ### 2.4 Model Performance
 
 #### Confusion Matrix
-![Confusion Matrix](assets/figures/cm_tcn.png)(assets/figures/cm_tcn-snn.png)
+<div style="display: flex; gap: 10px;">
+  <img src="assets/figures/cm_tcn.png" alt="TCN Confusion Matrix" width="48%">
+  <img src="assets/figures/cm_tcn-snn.png" alt="TCN-SNN Confusion Matrix" width="48%">
+</div>
+
 
 #### ROC Curves
-![ROC Curves](assets/figures/roc_curves-tcn.png)(assets/figures/roc_curves-tcn-snn.png)
+<div style="display: flex; gap: 10px;">
+  <img src="assets/figures/roc_curves-tcn.png" alt="ROC TCN" width="48%">
+  <img src="assets/figures/roc_curves-tcn-snn.png" alt="ROC TCN-SNN" width="48%">
+</div>
 
 ---
 
