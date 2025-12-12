@@ -4,6 +4,11 @@
 ![Deep Learning](https://img.shields.io/badge/AI-TCN%20%7C%20TCN--SNN-green)
 ![License](https://img.shields.io/badge/License-Academic-lightgrey)
 
+### Live Demo: https://pulmoscope.streamlit.app/
+## Full Manuscript
+Access the complete research manuscript here:  
+https://drive.google.com/file/d/1jdyt_dUKNHwU3iAuXgVqrGp3nJFp7U7S/view?usp=sharing
+
 PulmoScope is a **deep-learning powered assistive tool** developed to analyze **lung auscultation sounds** and classify respiratory conditions including Healthy, COPD, Pneumonia, and Other abnormalities. It implements two temporal AI architectures:
 
 - Pure Temporal Convolutional Network (TCN)
@@ -31,19 +36,10 @@ The experimental process involves architecture comparison, hyperparameter tuning
 
 ## 2. Figures from the Research Manuscript
 
-Place the required manuscript figures inside:
-
-PulmoScope/assets/figures/
-
 ### 2.1 Pipeline Overview
-File: pipeline_overview.png  
 ![Pipeline Overview](assets/figures/pipeline_overview.png)
 
 ### 2.2 Waveforms and RMS Envelopes
-Files:
-- waveform_healthy.png  
-- waveform_copd.png  
-- waveform_pneumonia.png  
 
 #### Healthy
 ![Healthy Waveform](assets/figures/waveform_healthy.png)
@@ -55,13 +51,9 @@ Files:
 ![Pneumonia Waveform](assets/figures/waveform_pneumonia.png)
 
 ### 2.3 Spectral Feature Analysis
-File: spectral_boxplots.png  
 ![Spectral Boxplots](assets/figures/spectral_boxplots.png)
 
 ### 2.4 Model Performance
-Files:
-- confusion_matrix.png  
-- roc_curves.png  
 
 #### Confusion Matrix
 ![Confusion Matrix](assets/figures/confusion_matrix.png)
