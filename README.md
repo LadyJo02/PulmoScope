@@ -1,56 +1,148 @@
-# 🫁 PulmoScope
+# PulmoScope — AI-Assisted Lung Sound Analysis  
+![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
+![Streamlit](https://img.shields.io/badge/Framework-Streamlit-FF4B4B)
+![Deep Learning](https://img.shields.io/badge/AI-TCN%20%7C%20TCN--SNN-green)
+![License](https://img.shields.io/badge/License-Academic-lightgrey)
 
-**PulmoScope** is an academic deep-learning web application for **AI-assisted analysis of lung sound recordings**.  
-It enables automated classification of respiratory conditions using **Temporal Convolutional Networks (TCN)** and a **hybrid TCN–Spiking Neural Network (TCN-SNN)** model.
+PulmoScope is a **deep-learning powered assistive tool** developed to analyze **lung auscultation sounds** and classify respiratory conditions including Healthy, COPD, Pneumonia, and Other abnormalities. It implements two temporal AI architectures:
 
-> ⚠️ **Disclaimer**  
-> PulmoScope is an academic prototype only and **not a medical device**.  
-> It is intended for research and educational purposes.
+- Pure Temporal Convolutional Network (TCN)
+- Hybrid Temporal Convolutional Network with Spiking Neural Network (TCN-SNN)
 
----
-
-## 🚀 Features
-
-- Upload lung sound recordings (`.wav`)  
-- Optional **real-time audio recording** via microphone  
-- Compare **two deep-learning models side-by-side**  
-- Mel-spectrogram visualization  
-- Multi-class prediction: Normal, COPD, Pneumonia, Other Respiratory Conditions  
-- Streamlit-based UI (deployable on Streamlit Cloud)  
+Disclaimer: PulmoScope is not a medical device. It is intended solely for academic research and demonstration.
 
 ---
 
-## 🧠 Models
+## 1. Project Overview
 
-Two trained models are supported:
+PulmoScope provides:
 
-| Model | Description |
-|-----|------------|
-| **Pure TCN** | Multi-scale Temporal Convolutional Network with attention |
-| **Hybrid TCN–SNN** | TCN backbone combined with Spiking Neural Network dynamics |
+- Uploading of `.wav` lung sound recordings  
+- Browser-based microphone recording  
+- Automated preprocessing (filtering, segmentation, normalization)  
+- Mel-spectrogram feature extraction  
+- Side-by-side predictions from TCN and TCN-SNN  
+- Optional Grad-CAM interpretability  
+- Streamlit-based UI
 
-Both models were trained under a **strict apples-to-apples experimental setup**, sharing:
-- Same preprocessing pipeline  
-- Same classifier head  
-- Same hyperparameter search strategy  
+The experimental process involves architecture comparison, hyperparameter tuning, and final evaluation.
 
 ---
 
-## 📁 Project Structure
+## 2. Figures from the Research Manuscript
+
+Place the required manuscript figures inside:
+
+PulmoScope/assets/figures/
+
+### 2.1 Pipeline Overview
+File: pipeline_overview.png  
+![Pipeline Overview](assets/figures/pipeline_overview.png)
+
+### 2.2 Waveforms and RMS Envelopes
+Files:
+- waveform_healthy.png  
+- waveform_copd.png  
+- waveform_pneumonia.png  
+
+#### Healthy
+![Healthy Waveform](assets/figures/waveform_healthy.png)
+
+#### COPD
+![COPD Waveform](assets/figures/waveform_copd.png)
+
+#### Pneumonia
+![Pneumonia Waveform](assets/figures/waveform_pneumonia.png)
+
+### 2.3 Spectral Feature Analysis
+File: spectral_boxplots.png  
+![Spectral Boxplots](assets/figures/spectral_boxplots.png)
+
+### 2.4 Model Performance
+Files:
+- confusion_matrix.png  
+- roc_curves.png  
+
+#### Confusion Matrix
+![Confusion Matrix](assets/figures/confusion_matrix.png)
+
+#### ROC Curves
+![ROC Curves](assets/figures/roc_curves.png)
+
+---
+
+## 3. Features
+
+### Audio Input
+- Upload `.wav` files
+- Record audio in-browser
+
+### AI Models
+- Pure TCN with multi-scale convolution and attention  
+- Hybrid TCN–SNN with spiking neuron activation  
+
+### Output Visualizations
+- Mel-spectrogram  
+- Grad-CAM heatmap  
+- Class probabilities  
+
+### Diagnostic Labels
+
+| Label | Description |
+|-------|-------------|
+| Healthy | Normal respiratory sound pattern |
+| COPD | Wheezes and obstructive airflow |
+| Pneumonia | Crackles and fluid-related abnormalities |
+| Other | Asthma, URTI/LRTI, Bronchiectasis |
+
+---
+
+## 4. Model Architecture
+
+### Pure TCN
+- Kernel sizes: 3, 5, 7
+- Dilated convolutions
+- Residual blocks
+- Attention module
+
+### Hybrid TCN–SNN
+- Identical TCN backbone
+- Parametric LIF spiking neuron module
+- Sparse temporal activation
+- Attention classifier head
+
+### Shared Classifier
+- Dense layers: 192 → 128 → 64
+- GELU activation
+- Dropout
+- Softmax output layer
+
+---
+
+## 5. Repository Structure
 
 ```
 PulmoScope/
-├── app.py                     # Streamlit web app
+├── app.py
 ├── assets/
-│   └── banner.png              # UI header banner
+│   ├── banner.png
+│   └── figures/
+│       ├── pipeline_overview.png
+│       ├── waveform_healthy.png
+│       ├── waveform_copd.png
+│       ├── waveform_pneumonia.png
+│       ├── spectral_boxplots.png
+│       ├── confusion_matrix.png
+│       └── roc_curves.png
 ├── models/
 │   ├── pure_tcn_weights.pth
 │   └── tcn_snn_weights.pth
 ├── utils/
-│   ├── preprocess.py           # Audio preprocessing
-│   ├── inference.py            # Model loading and inference
-│   ├── architectures.py        # Model architectures
-│   └── gradcam.py              # Grad-CAM explainer (optional)
+│   ├── preprocess.py
+│   ├── inference.py
+│   ├── architectures.py
+│   ├── gradcam.py
+│   └── audio_utils.py
 ├── requirements.txt
 └── README.md
 ```
