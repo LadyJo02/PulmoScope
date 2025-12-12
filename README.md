@@ -56,10 +56,10 @@ The experimental process involves architecture comparison, hyperparameter tuning
 ### 2.4 Model Performance
 
 #### Confusion Matrix
-![Confusion Matrix](assets/figures/confusion_matrix.png)
+![Confusion Matrix](assets/figures/cm_tcn.png)(assets/figures/cm_tcn-snn.png)
 
 #### ROC Curves
-![ROC Curves](assets/figures/roc_curves.png)
+![ROC Curves](assets/figures/roc_curves-tcn.png)(assets/figures/roc_curves-tcn-snn.png)
 
 ---
 
