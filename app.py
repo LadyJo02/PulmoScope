@@ -181,38 +181,66 @@ st.markdown("---")
 
 
 # =========================================================
-# ANALYSIS BUTTON WITH POPUP
+# ANALYSIS BUTTON WITH REAL WORKING MODAL
 # =========================================================
+
+# User clicks Analyze → show modal
 if audio is not None:
     if st.button("Run PulmoScope Analysis"):
         st.session_state.show_modal = True
 
 
-# ------------------------------ MODAL HTML ------------------------------
+# ------------------------------ MODAL OVERLAY ------------------------------
 if st.session_state.show_modal:
+
+    # Show grey background overlay
     st.markdown("""
-    <div id="modal-bg">
-        <div id="modal-box">
-            <h4>Proceed with Analysis?</h4>
-            <p style="color:#4B5563; font-size:14px;">
-                PulmoScope will preprocess the audio and run both AI models.
-            </p>
-            <button class="modal-btn" onclick="fetch('/?confirm_analysis=true', {method:'POST'})">Analyze</button>
-            <button class="modal-btn modal-cancel" onclick="fetch('/?cancel=true', {method:'POST'})">Cancel</button>
-        </div>
-    </div>
+    <div style="
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw; height: 100vh;
+        background: rgba(0,0,0,0.4);
+        z-index: 9998;
+    "></div>
     """, unsafe_allow_html=True)
 
-# Handle modal actions
-query_params = st.query_params
-if "confirm_analysis" in query_params:
-    st.session_state.show_modal = False
-    st.session_state.mel = create_mel(audio)
-    st.query_params.clear()
+    # Create modal box container
+    modal_container = st.container()
+    with modal_container:
+        st.markdown("""
+        <div style="
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            width: 360px;
+            padding: 24px;
+            border-radius: 12px;
+            text-align: center;
+            z-index: 9999;
+            border: 1px solid #E5E7EB;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+        ">
+        <h4>Proceed with Analysis?</h4>
+        <p style="font-size: 14px; color: #4B5563;">
+            PulmoScope will preprocess your audio and run both AI models.
+        </p>
+        </div>
+        """, unsafe_allow_html=True)
 
-if "cancel" in query_params:
-    st.session_state.show_modal = False
-    st.query_params.clear()
+        # Buttons MUST be below HTML for Streamlit to render them interactively
+        colA, colB = st.columns(2)
+        with colA:
+            if st.button("Analyze Now"):
+                st.session_state.mel = create_mel(audio)
+                st.session_state.show_modal = False
+                st.rerun()
+
+        with colB:
+            if st.button("Cancel"):
+                st.session_state.show_modal = False
+                st.rerun()
+
 
 
 # =========================================================
