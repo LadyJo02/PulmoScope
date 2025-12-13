@@ -35,7 +35,6 @@ body {
     100% { background-position: 0% 50%; }
 }
 
-/* Main container spacing */
 .block-container {
     padding-top: 1.5rem;
 }
@@ -67,6 +66,18 @@ div.stButton > button {
 
 div.stButton > button:hover {
     background-color: #1D4ED8;
+}
+
+/* Secondary (cancel) button */
+button[kind="secondary"] {
+    background-color: #E5E7EB !important;
+    color: #1F2937 !important;
+    border-radius: 8px !important;
+    border: 1px solid #CBD5E1 !important;
+}
+
+button[kind="secondary"]:hover {
+    background-color: #CBD5E1 !important;
 }
 
 </style>
@@ -138,16 +149,17 @@ with lcol:
             st.audio(recorded)
             audio = load_audio(recorded)
 
+# 🔒 EXACT BLOCK YOU REQUESTED (UNCHANGED)
 with rcol:
     st.markdown("""
-    <div class="card">
-        <h4>Clinical Acquisition Guidance</h4>
-        <p style="font-size:14px; color:#475569;">
-            Record in a quiet environment. Place the microphone firmly on the chest wall.
-            Avoid motion artifacts. At least 5–10 seconds of steady breathing is recommended
-            for reliable temporal feature extraction.
-        </p>
-    </div>
+        <div style="background:white; padding:18px; border-radius:10px; border:1px solid #E5E7EB;">
+            <h4>Clinical Notes for Auscultation</h4>
+            <p style="font-size:14px; color:#4B5563;">
+                Record in a quiet environment, <br>
+                minimize rubbing noise, <br>
+                and capture at least 5–10 seconds of steady breathing.
+            </p>
+        </div>
     """, unsafe_allow_html=True)
 
 st.divider()
@@ -157,16 +169,22 @@ st.divider()
 # =========================================================
 @st.dialog("Confirm Analysis")
 def confirm_dialog():
-    st.write("""
-    You are about to run AI-assisted analysis on the selected lung sound.
-    This process performs automated preprocessing and model inference.
-    """)
-    if st.button("Proceed with Analysis"):
-        st.session_state.confirm_run = True
-        st.rerun()
-    if st.button("Cancel"):
-        st.session_state.confirm_run = False
-        st.rerun()
+    st.write(
+        "You are about to run AI-assisted analysis on the selected lung sound. "
+        "This will perform automated preprocessing and inference using both models."
+    )
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if st.button("Proceed with Analysis"):
+            st.session_state.confirm_run = True
+            st.rerun()
+
+    with col2:
+        if st.button("Cancel", type="secondary"):
+            st.session_state.confirm_run = False
+            st.rerun()
 
 # =========================================================
 # SECTION 2 — PREPROCESSING
@@ -189,7 +207,6 @@ mel = st.session_state.mel
 if mel is not None:
     left, right = st.columns([1.15, 0.85])
 
-    # Spectrogram
     with left:
         st.markdown("<div class='card'><h4>Mel-Spectrogram</h4>", unsafe_allow_html=True)
         fig, ax = plt.subplots(figsize=(6.5, 4))
@@ -199,7 +216,6 @@ if mel is not None:
         st.pyplot(fig, clear_figure=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # Predictions
     with right:
         st.markdown("<div class='card'><h4>Model Predictions and Confidence</h4>", unsafe_allow_html=True)
 
@@ -255,7 +271,7 @@ with st.expander("View attention heatmaps"):
         with c1:
             fig, ax = plt.subplots(figsize=(4, 3))
             ax.imshow(mel, aspect="auto", origin="lower", cmap="viridis")
-            ax.set_title("Input")
+            ax.set_title("Input Mel-Spectrogram")
             st.pyplot(fig, clear_figure=True)
 
         with c2:
@@ -270,13 +286,18 @@ with st.expander("View attention heatmaps"):
             ax.set_title("Hybrid TCN-SNN Attention")
             st.pyplot(fig, clear_figure=True)
 
+        # 👇 USER-FACING EXPLANATION (CLEAR & CLINICAL)
         st.markdown("""
         <p style="font-size:14px; color:#475569;">
-        Highlighted regions correspond to acoustic segments most influential in the model decision.
-        Strong activations often align with clinically relevant crackles or wheeze patterns,
-        consistent with the study findings.
+        <strong>How to interpret the heatmaps:</strong><br>
+        Warmer colors (yellow to red) indicate time–frequency regions of the lung sound
+        that contributed most strongly to the model’s prediction. Cooler colors indicate
+        regions with minimal influence. Concentrated high-activation regions often
+        correspond to clinically relevant acoustic events such as crackles, wheezes,
+        or abnormal airflow patterns observed during auscultation.
         </p>
         """, unsafe_allow_html=True)
+
     else:
         st.info("Run analysis to enable interpretability.")
 
