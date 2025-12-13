@@ -8,30 +8,58 @@ from utils.inference import load_model, predict
 from utils.gradcam import GradCAM
 
 # =========================================================
-# GLOBAL PAGE CONFIGURATION
+# PAGE CONFIGURATION
 # =========================================================
 st.set_page_config(
     page_title="PulmoScope",
     layout="wide",
 )
 
-# Background (subtle clinical tone)
+# =========================================================
+# CLINICAL UI STYLING (BLUE BUTTONS + ANIMATED BACKGROUND)
+# =========================================================
 st.markdown("""
 <style>
-body { background-color: #F5F7FA; }
+
+body {
+    background: linear-gradient(120deg, #e6f3ff 0%, #f5faff 100%);
+    animation: gradientShift 6s ease infinite alternate;
+}
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+}
+
+button[kind="primary"] {
+    background-color: #2563EB !important;
+    color: white !important;
+    border-radius: 8px !important;
+    padding: 0.6rem 1.2rem !important;
+    border: none !important;
+}
+button {
+    border-radius: 8px !important;
+}
+
 .block-container { padding-top: 1.5rem; }
 h1, h2, h3, h4 { color: #1F2937; }
+
 </style>
 """, unsafe_allow_html=True)
 
 LABELS = ["COPD", "Healthy", "Pneumonia", "Other"]
 
-# Session defaults
+# =========================================================
+# SESSION DEFAULTS
+# =========================================================
 if "mel" not in st.session_state:
     st.session_state.mel = None
 
+if "audio_ready" not in st.session_state:
+    st.session_state.audio_ready = False
+
 # =========================================================
-# HEADER — CLEAN CLINICAL PRESENTATION
+# HEADER
 # =========================================================
 st.markdown("""
 <div style="text-align:center; margin-bottom:18px;">
@@ -43,7 +71,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =========================================================
-# LOAD MODELS — CACHED FOR SPEED
+# LOAD MODELS
 # =========================================================
 @st.cache_resource
 def load_models():
@@ -60,7 +88,7 @@ load_c2.info("Hybrid TCN-SNN model loaded successfully.")
 st.markdown("---")
 
 # =========================================================
-# SECTION 1 — AUDIO INPUT (CLEAN TWO-COLUMN LAYOUT)
+# SECTION 1 — INPUT
 # =========================================================
 st.subheader("1. Input Lung Sound")
 
@@ -72,29 +100,33 @@ input_mode = st.radio(
 
 audio = None
 
+# --- Layout ---
 left_col, right_col = st.columns([1, 1])
 
 with left_col:
     if input_mode == "Upload .wav file":
-        uploaded = st.file_uploader("Upload a lung sound (.wav)", type=["wav"])
+        uploaded = st.file_uploader("Upload lung sound (.wav)", type=["wav"])
         if uploaded:
             st.audio(uploaded)
             audio = load_audio(uploaded)
+            st.session_state.audio_ready = True
 
-    else:  # microphone mode
+    else:
         recorded = st.audio_input("Record lung sound")
         if recorded:
             st.audio(recorded)
             audio = load_audio(recorded)
+            st.session_state.audio_ready = True
 
 with right_col:
     st.markdown("""
     <div style="padding:18px; background:white; border-radius:10px; border:1px solid #E5E7EB;">
-        <h4 style="margin-bottom:6px;">Clinical Notes for Acquisition</h4>
+        <h4 style="margin-bottom:6px;">Clinical Notes</h4>
         <p style="font-size:14px; color:#4B5563;">
-            Ensure a quiet environment and hold the microphone close to the chest.
-            Avoid excessive movement or rubbing noise.
-            A minimum of 2–3 seconds of steady breathing improves model reliability.
+            • Record in a quiet environment.<br>
+            • Keep the microphone near the chest, avoiding contact noise.<br>
+            • Capture at least 5–10 seconds of steady respiration.<br>
+            • Avoid rubbing, fabric noise, or speaking during recording.<br>
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -102,43 +134,62 @@ with right_col:
 st.markdown("---")
 
 # =========================================================
-# SECTION 2 — PREPROCESSING & SPECTROGRAM
+# POPUP DIALOG FOR ANALYSIS CONFIRMATION
 # =========================================================
-st.subheader("2. Preprocessing and Feature Extraction")
-
-if audio is not None:
-    if st.button("Run PulmoScope Analysis", type="primary"):
-        with st.spinner("Processing audio and generating spectrogram..."):
+@st.dialog("Confirm PulmoScope Analysis")
+def analysis_popup(audio):
+    st.write(
+        "Proceed with analysis? PulmoScope will extract features, "
+        "compute predictions using TCN and TCN-SNN models, and generate interpretability maps."
+    )
+    c1, c2 = st.columns(2)
+    with c1:
+        if st.button("Proceed", type="primary"):
             st.session_state.mel = create_mel(audio)
+            st.rerun()
+    with c2:
+        if st.button("Cancel"):
+            st.session_state.mel = None
+            st.rerun()
+
+# =========================================================
+# ANALYZE BUTTON (TRIGGERS POPUP)
+# =========================================================
+if st.session_state.audio_ready:
+    if st.button("Run PulmoScope Analysis", type="primary"):
+        analysis_popup(audio)
+else:
+    st.caption("Upload or record audio to enable analysis.")
 
 mel = st.session_state.mel
 
+# =========================================================
+# SECTION 2 — SPECTROGRAM + MODEL PREDICTIONS
+# =========================================================
 if mel is not None:
+
     sp_left, sp_right = st.columns([1.1, 0.9])
 
-    # Mel-spectrogram display
+    # --- Spectrogram ---
     with sp_left:
         st.markdown("""
         <div style="padding:18px; background:white; border-radius:10px; border:1px solid #E5E7EB;">
-        <h4>Mel-Spectrogram Representation</h4>
+            <h4>Mel-Spectrogram</h4>
         """, unsafe_allow_html=True)
 
         fig, ax = plt.subplots(figsize=(6.5, 4))
         ax.imshow(mel, aspect="auto", origin="lower", cmap="viridis")
         ax.set_xlabel("Time")
         ax.set_ylabel("Frequency")
-        ax.set_title("Extracted Mel-Spectrogram", fontsize=11)
         st.pyplot(fig, clear_figure=True)
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # =====================================================
-    # SECTION 3 — MODEL OUTPUTS (TCN vs TCN-SNN)
-    # =====================================================
+    # --- Predictions ---
     with sp_right:
         st.markdown("""
         <div style="padding:18px; background:white; border-radius:10px; border:1px solid #E5E7EB;">
-        <h4>Model Predictions and Confidence Scores</h4>
+            <h4>Model Predictions</h4>
         """, unsafe_allow_html=True)
 
         pred_tcn, prob_tcn = predict(pure_tcn, mel)
@@ -146,39 +197,36 @@ if mel is not None:
 
         col_tcn, col_snn = st.columns(2)
 
-        # --- Pure TCN ---
         with col_tcn:
-            st.write("Pure TCN Prediction:", f"**{pred_tcn}**")
+            st.write("Pure TCN:", f"**{pred_tcn}**")
             for label, score in zip(LABELS, prob_tcn):
-                st.write(f"{label}: {score * 100:.1f}%")
+                st.write(f"{label}: {score*100:.1f}%")
                 st.progress(float(score))
 
-        # --- Hybrid TCN-SNN ---
         with col_snn:
-            st.write("Hybrid TCN-SNN Prediction:", f"**{pred_snn}**")
+            st.write("Hybrid TCN-SNN:", f"**{pred_snn}**")
             for label, score in zip(LABELS, prob_snn):
-                st.write(f"{label}: {score * 100:.1f}%")
+                st.write(f"{label}: {score*100:.1f}%")
                 st.progress(float(score))
 
-        # Consensus Display
         if pred_tcn == pred_snn:
-            st.info(f"Both models agree: predicted **{pred_tcn}**.")
+            st.success(f"Both models agree on **{pred_tcn}**.")
         else:
-            st.warning("Models disagree. Review the interpretability heatmaps below.")
+            st.info("Models differ. Consult the interpretability heatmaps below.")
 
         st.markdown("</div>", unsafe_allow_html=True)
 
 else:
-    st.caption("Please upload or record audio, then run the analysis.")
+    st.caption("Awaiting analysis...")
 
 st.markdown("---")
 
 # =========================================================
-# SECTION 4 — INTERPRETABILITY (GRAD-CAM)
+# SECTION 3 — GRAD-CAM INTERPRETABILITY
 # =========================================================
-st.subheader("3. Model Interpretation (Grad-CAM Attention Maps)")
+st.subheader("3. Model Interpretation")
 
-with st.expander("Show interpretability heatmaps"):
+with st.expander("Show attention heatmaps"):
     if mel is not None:
 
         x = torch.tensor(mel).unsqueeze(0).float()
@@ -186,53 +234,51 @@ with st.expander("Show interpretability heatmaps"):
         cam_tcn = GradCAM(pure_tcn)
         cam_snn = GradCAM(tcn_snn)
 
-        cls_tcn = LABELS.index(pred_tcn)
-        cls_snn = LABELS.index(pred_snn)
+        heat_tcn = cam_tcn.generate(x, LABELS.index(pred_tcn))
+        heat_snn = cam_snn.generate(x, LABELS.index(pred_snn))
 
-        heat_tcn = cam_tcn.generate(x, cls_tcn)
-        heat_snn = cam_snn.generate(x, cls_snn)
+        c1, c2, c3 = st.columns(3)
 
-        i1, i2, i3 = st.columns(3)
-
-        # Input
-        with i1:
+        with c1:
             fig, ax = plt.subplots(figsize=(4.2, 3.2))
-            ax.imshow(mel, aspect="auto", origin="lower", cmap="viridis")
-            ax.set_title("Input Mel-Spectrogram", fontsize=10)
+            ax.imshow(mel, cmap="viridis", origin="lower")
+            ax.set_title("Input Mel")
             st.pyplot(fig, clear_figure=True)
 
-        # TCN attention
-        with i2:
+        with c2:
             fig, ax = plt.subplots(figsize=(4.2, 3.2))
-            ax.imshow(heat_tcn, aspect="auto", origin="lower", cmap="inferno")
-            ax.set_title("Pure TCN Attention Map", fontsize=10)
+            ax.imshow(heat_tcn, cmap="inferno", origin="lower")
+            ax.set_title("TCN Attention")
             st.pyplot(fig, clear_figure=True)
 
-        # SNN attention
-        with i3:
+        with c3:
             fig, ax = plt.subplots(figsize=(4.2, 3.2))
-            ax.imshow(heat_snn, aspect="auto", origin="lower", cmap="inferno")
-            ax.set_title("Hybrid TCN-SNN Attention Map", fontsize=10)
+            ax.imshow(heat_snn, cmap="inferno", origin="lower")
+            ax.set_title("TCN-SNN Attention")
             st.pyplot(fig, clear_figure=True)
 
-        st.markdown("""
-        <p style="color:#4B5563; font-size:14px; margin-top:12px;">
-        Highlighted regions indicate acoustic segments most influential to the model’s decision.
-        Redder areas represent stronger activation, often corresponding to crackles, wheezes,
-        or transient events known in respiratory analysis literature.
-        </p>
-        """, unsafe_allow_html=True)
     else:
-        st.info("Run analysis to view interpretability results.")
+        st.info("No analysis performed.")
 
 st.markdown("---")
 
 # =========================================================
-# RESET BUTTON
+# NEW ANALYSIS POPUP
 # =========================================================
-if st.button("Start a new analysis"):
-    st.session_state.clear()
-    st.rerun()
+@st.dialog("Start New Analysis")
+def reset_popup():
+    st.write("Are you sure you want to reset and begin a new analysis?")
+    colA, colB = st.columns(2)
+    with colA:
+        if st.button("Yes", type="primary"):
+            st.session_state.clear()
+            st.rerun()
+    with colB:
+        if st.button("Cancel"):
+            st.rerun()
+
+if st.button("Start a New Analysis"):
+    reset_popup()
 
 # =========================================================
 # FOOTER
