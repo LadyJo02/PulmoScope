@@ -68,17 +68,6 @@ div.stButton > button:hover {
     background-color: #1D4ED8;
 }
 
-/* === CANCEL BUTTON ONLY (GRAY) === */
-.cancel-btn div.stButton > button {
-    background-color: #E5E7EB !important;
-    color: #1F2937 !important;
-    border: 1px solid #CBD5E1 !important;
-}
-
-.cancel-btn div.stButton > button:hover {
-    background-color: #CBD5E1 !important;
-}
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -181,11 +170,10 @@ def confirm_dialog():
             st.rerun()
 
     with col2:
-        st.markdown("<div class='cancel-btn'>", unsafe_allow_html=True)
-        if st.button("Cancel"):
+        if st.button("Cancel", type="secondary"):
             st.session_state.confirm_run = False
             st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
+
 
 # =========================================================
 # SECTION 2 — PREPROCESSING
