@@ -54,7 +54,7 @@ h1, h2, h3, h4 {
     box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
 }
 
-/* Primary button (medical blue) */
+/* === DEFAULT BUTTON STYLE: MEDICAL BLUE === */
 div.stButton > button {
     background-color: #2563EB;
     color: white;
@@ -68,15 +68,14 @@ div.stButton > button:hover {
     background-color: #1D4ED8;
 }
 
-/* Secondary (cancel) button */
-button[kind="secondary"] {
+/* === CANCEL BUTTON ONLY (GRAY) === */
+.cancel-btn div.stButton > button {
     background-color: #E5E7EB !important;
     color: #1F2937 !important;
-    border-radius: 8px !important;
     border: 1px solid #CBD5E1 !important;
 }
 
-button[kind="secondary"]:hover {
+.cancel-btn div.stButton > button:hover {
     background-color: #CBD5E1 !important;
 }
 
@@ -182,9 +181,11 @@ def confirm_dialog():
             st.rerun()
 
     with col2:
-        if st.button("Cancel", type="secondary"):
+        st.markdown("<div class='cancel-btn'>", unsafe_allow_html=True)
+        if st.button("Cancel"):
             st.session_state.confirm_run = False
             st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================================================
 # SECTION 2 — PREPROCESSING
