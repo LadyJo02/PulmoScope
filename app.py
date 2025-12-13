@@ -79,9 +79,6 @@ LABELS = ["COPD", "Healthy", "Pneumonia", "Other"]
 if "mel" not in st.session_state:
     st.session_state.mel = None
 
-if "confirm_run" not in st.session_state:
-    st.session_state.confirm_run = False
-
 # =========================================================
 # HEADER
 # =========================================================
@@ -137,7 +134,7 @@ with lcol:
             st.audio(recorded)
             audio = load_audio(recorded)
 
-# 🔒 EXACT BLOCK YOU REQUESTED (UNCHANGED)
+# EXACT clinical notes block
 with rcol:
     st.markdown("""
         <div style="background:white; padding:18px; border-radius:10px; border:1px solid #E5E7EB;">
@@ -153,40 +150,14 @@ with rcol:
 st.divider()
 
 # =========================================================
-# CONFIRMATION DIALOG
-# =========================================================
-@st.dialog("Confirm Analysis")
-def confirm_dialog():
-    st.write(
-        "You are about to run AI-assisted analysis on the selected lung sound. "
-        "This will perform automated preprocessing and inference using both models."
-    )
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        if st.button("Proceed with Analysis"):
-            st.session_state.confirm_run = True
-            st.rerun()
-
-    with col2:
-        if st.button("Cancel", type="secondary"):
-            st.session_state.confirm_run = False
-            st.rerun()
-
-
-# =========================================================
 # SECTION 2 — PREPROCESSING
 # =========================================================
 st.subheader("2. Preprocessing and Feature Extraction")
 
-if audio is not None and st.button("Run PulmoScope Analysis"):
-    confirm_dialog()
-
-if st.session_state.confirm_run and audio is not None:
-    with st.spinner("Processing audio and generating spectrogram..."):
-        st.session_state.mel = create_mel(audio)
-    st.session_state.confirm_run = False
+if audio is not None:
+    if st.button("Run PulmoScope Analysis"):
+        with st.spinner("Processing audio and generating spectrogram..."):
+            st.session_state.mel = create_mel(audio)
 
 mel = st.session_state.mel
 
@@ -275,7 +246,6 @@ with st.expander("View attention heatmaps"):
             ax.set_title("Hybrid TCN-SNN Attention")
             st.pyplot(fig, clear_figure=True)
 
-        # 👇 USER-FACING EXPLANATION (CLEAR & CLINICAL)
         st.markdown("""
         <p style="font-size:14px; color:#475569;">
         <strong>How to interpret the heatmaps:</strong><br>
