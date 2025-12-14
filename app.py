@@ -2,10 +2,41 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
+from pathlib import Path
 
 from utils.preprocess import load_audio, create_mel
 from utils.inference import load_model, predict
 from utils.gradcam import GradCAM
+
+# =========================================================
+# SAMPLE AUDIO (DEMO)
+# =========================================================
+SAMPLE_AUDIO = {
+    "Healthy": {
+        "Healthy – Sample 01": "assets/sample_audio/Healthy_01.wav",
+        "Healthy – Sample 02": "assets/sample_audio/Healthy_02.wav",
+        "Healthy – Sample 03": "assets/sample_audio/Healthy_03.wav",
+        "Healthy – Sample 04": "assets/sample_audio/Healthy_04.wav",
+    },
+    "COPD": {
+        "COPD – Sample 01": "assets/sample_audio/COPD_01.wav",
+        "COPD – Sample 02": "assets/sample_audio/COPD_02.wav",
+        "COPD – Sample 03": "assets/sample_audio/COPD_03.wav",
+        "COPD – Sample 04": "assets/sample_audio/COPD_04.wav",
+    },
+    "Pneumonia": {
+        "Pneumonia – Sample 01": "assets/sample_audio/Pneumonia_01.wav",
+        "Pneumonia – Sample 02": "assets/sample_audio/Pneumonia_02.wav",
+        "Pneumonia – Sample 03": "assets/sample_audio/Pneumonia_03.wav",
+        "Pneumonia – Sample 04": "assets/sample_audio/Pneumonia_04.wav",
+    },
+    "Other Respiratory Conditions": {
+        "URTI – Sample": "assets/sample_audio/Others_01_URTI.wav",
+        "Asthma – Sample": "assets/sample_audio/Others_02_Asthma.wav",
+        "Bronchiectasis – Sample": "assets/sample_audio/Others_03_Bronchiectasis.wav",
+        "Bronchiolitis – Sample": "assets/sample_audio/Others_04_Bronchiolitis.wav",
+    },
+}
 
 # =========================================================
 # PAGE CONFIG
@@ -21,31 +52,21 @@ st.set_page_config(
 # =========================================================
 st.markdown("""
 <style>
-
-/* Animated medical gradient background */
 body {
     background: linear-gradient(120deg, #EAF2FB, #F5F9FF, #EAF2FB);
     background-size: 400% 400%;
     animation: gradientMove 18s ease infinite;
 }
-
 @keyframes gradientMove {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
 }
-
-.block-container {
-    padding-top: 1.5rem;
-}
-
-/* Typography */
+.block-container { padding-top: 1.5rem; }
 h1, h2, h3, h4 {
     color: #0F172A;
     font-weight: 600;
 }
-
-/* Card style */
 .card {
     background: white;
     border-radius: 12px;
@@ -53,8 +74,6 @@ h1, h2, h3, h4 {
     border: 1px solid #E5E7EB;
     box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
 }
-
-/* === DEFAULT BUTTON STYLE: MEDICAL BLUE === */
 div.stButton > button {
     background-color: #2563EB;
     color: white;
@@ -63,11 +82,9 @@ div.stButton > button {
     padding: 0.5rem 1.2rem;
     font-weight: 500;
 }
-
 div.stButton > button:hover {
     background-color: #1D4ED8;
 }
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -115,7 +132,7 @@ st.subheader("1. Lung Sound Acquisition")
 
 mode = st.radio(
     "Select input method:",
-    ["Upload .wav file", "Record via microphone"],
+    ["Upload .wav file", "Record via microphone", "Use sample audio (demo)"],
     horizontal=True,
 )
 
@@ -128,11 +145,33 @@ with lcol:
         if uploaded:
             st.audio(uploaded)
             audio = load_audio(uploaded)
-    else:
+
+    elif mode == "Record via microphone":
         recorded = st.audio_input("Record lung sound")
         if recorded:
             st.audio(recorded)
             audio = load_audio(recorded)
+
+    else:  # SAMPLE AUDIO MODE
+        condition = st.selectbox(
+            "Select respiratory condition:",
+            list(SAMPLE_AUDIO.keys())
+        )
+
+        sample_name = st.selectbox(
+            "Select sample recording:",
+            list(SAMPLE_AUDIO[condition].keys())
+        )
+
+        sample_path = SAMPLE_AUDIO[condition][sample_name]
+
+        st.audio(sample_path)
+        audio = load_audio(sample_path)
+
+        st.caption(
+            "Sample recordings are provided for demonstration purposes only "
+            "and do not represent clinical diagnoses."
+        )
 
 # EXACT clinical notes block
 with rcol:
@@ -204,7 +243,7 @@ if mel is not None:
         st.markdown("</div>", unsafe_allow_html=True)
 
 else:
-    st.caption("Upload or record audio to begin analysis.")
+    st.caption("Upload, record, or select sample audio to begin analysis.")
 
 st.divider()
 
@@ -248,14 +287,19 @@ with st.expander("View attention heatmaps"):
 
         st.markdown("""
         <p style="font-size:14px; color:#475569;">
-        <strong>How to interpret the heatmaps:</strong><br>
-        Warmer colors (yellow to red) indicate time–frequency regions of the lung sound
-        that contributed most strongly to the model’s prediction. Cooler colors indicate
-        regions with minimal influence. Concentrated high-activation regions often
-        correspond to clinically relevant acoustic events such as crackles, wheezes,
-        or abnormal airflow patterns observed during auscultation.
+        <strong>How to interpret the attention maps:</strong><br>
+        The attention maps indicate the relative importance of different <em>time segments</em>
+        in the lung sound recording used by the model during prediction.
+        Using the <em>inferno</em> color scale, darker violet to near-black regions represent
+        time intervals with minimal influence, while brighter yellow to near-white regions
+        indicate segments that contributed more strongly to the predicted class.
+        The prominent vertical patterns reflect the temporal nature of the TCN and TCN–SNN
+        architectures, highlighting when the model focused its attention rather than
+        localizing specific frequency bands or clinical events.
+        These maps should be interpreted as model emphasis, not direct physiological markers.
         </p>
         """, unsafe_allow_html=True)
+
 
     else:
         st.info("Run analysis to enable interpretability.")
