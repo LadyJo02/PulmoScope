@@ -287,16 +287,14 @@ with st.expander("View attention heatmaps"):
 
         st.markdown("""
         <p style="font-size:14px; color:#475569;">
-        <strong>How to interpret the attention maps:</strong><br>
-        The attention maps indicate the relative importance of different <em>time segments</em>
-        in the lung sound recording used by the model during prediction.
-        Using the <em>inferno</em> color scale, darker violet to near-black regions represent
-        time intervals with minimal influence, while brighter yellow to near-white regions
-        indicate segments that contributed more strongly to the predicted class.
-        The prominent vertical patterns reflect the temporal nature of the TCN and TCN–SNN
-        architectures, highlighting when the model focused its attention rather than
-        localizing specific frequency bands or clinical events.
-        These maps should be interpreted as model emphasis, not direct physiological markers.
+        <strong>How to interpret the attention maps:</strong>
+        <ul>
+        <li><strong>Dark violet to near-black:</strong> Time segments with little influence on the prediction</li>
+        <li><strong>Purple to orange:</strong> Moderately important time segments</li>
+        <li><strong>Bright yellow to near-white:</strong> Time segments that strongly influenced the prediction</li>
+        <li><strong>Vertical patterns:</strong> Indicate when (in time) the model focused its attention</li>
+        <li><strong>Note:</strong> These maps show model emphasis over time, not exact clinical or frequency-specific markers</li>
+        </ul>
         </p>
         """, unsafe_allow_html=True)
 
