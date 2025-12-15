@@ -112,6 +112,9 @@ PulmoScope/
 ├── assets/                             
 │   ├── banner.png                    # Application header/banner image
 │   └── figures/                      # Figures used in manuscript and README
+│   ├── manuscript/                   # Complete Manuscript
+│   ├── notebooks/                    # Exploratory and Model Analysis Notebooks
+│   ├── sample_audio/                 # Sample audio for streamlit
 │   ├── slides/                       # PPT slide PNGs for README
 ├── models/                           
 │   ├── pure_tcn_config.json          # Pure TCN architecture configuration
