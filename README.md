@@ -1,3 +1,33 @@
+<p align="center">
+  <img src="assets/slides/1_title.png" width="90%">
+  <img src="assets/slides/2_problem.png" width="90%">
+  <img src="assets/slides/3_gaps.png" width="90%">
+  <img src="assets/slides/4_objectives.png" width="90%">
+  <img src="assets/slides/5_methodology.png" width="90%">
+  <img src="assets/slides/6_stage1.png" width="90%">
+  <img src="assets/slides/7_stage2.png" width="90%">
+  <img src="assets/slides/8_stage3.png" width="90%">
+  <img src="assets/slides/9_stage4.png" width="90%">
+  <img src="assets/slides/10_stage5.png" width="90%">
+  <img src="assets/slides/11_eda.png" width="90%">
+  <img src="assets/slides/12_data.png" width="90%">
+  <img src="assets/slides/13_healthy.png" width="90%">
+  <img src="assets/slides/14_copd.png" width="90%">
+  <img src="assets/slides/15_pneumonia.png" width="90%">
+  <img src="assets/slides/16_centroid.png" width="90%">
+  <img src="assets/slides/17_bandwidth.png" width="90%">
+  <img src="assets/slides/18_rolloff.png" width="90%">
+  <img src="assets/slides/19_flux.png" width="90%">
+  <img src="assets/slides/20_results.png" width="90%">
+  <img src="assets/slides/21_metrics.png" width="90%">
+  <img src="assets/slides/22_test.png" width="90%">
+  <img src="assets/slides/23_gradcam.png" width="90%">
+  <img src="assets/slides/24_conclusion.png" width="90%">
+  <img src="assets/slides/25_last.png" width="90%">
+</p>
+
+---
+
 # PulmoScope — AI-Assisted Lung Sound Analysis  
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
 ![Streamlit](https://img.shields.io/badge/Framework-Streamlit-FF4B4B)
@@ -6,94 +36,37 @@
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 ### Live Demo: https://pulmoscope.streamlit.app/
-## Full Manuscript
-Access the complete research manuscript here:  
-https://tinyurl.com/pulmoscope
-
-PulmoScope is a **deep-learning powered assistive tool** developed to analyze **lung auscultation sounds** and classify respiratory conditions including Healthy, COPD, Pneumonia, and Other abnormalities. It implements two temporal AI architectures:
-
-- Pure Temporal Convolutional Network (TCN)
-- Hybrid Temporal Convolutional Network with Spiking Neural Network (TCN-SNN)
-
-Disclaimer: PulmoScope is not a medical device. It is intended solely for academic research and demonstration.
+### Full Manuscript : https://tinyurl.com/pulmoscope
 
 ---
 
 ## 1. Project Overview
 
-PulmoScope provides:
+PulmoScope is a **deep-learning–based assistive system** for analyzing lung auscultation sounds and classifying respiratory conditions.  
+The system is designed to support clinical screening by leveraging **temporal deep learning models** for disease-level lung sound classification.It compares two architectures:
+- **Pure Temporal Convolutional Network (TCN)**
+- **Hybrid Temporal Convolutional Network with Spiking Neural Network (TCN–SNN)**
 
-- Uploading of `.wav` lung sound recordings  
-- Browser-based microphone recording  
-- Automated preprocessing (filtering, segmentation, normalization)  
-- Mel-spectrogram feature extraction  
-- Side-by-side predictions from TCN and TCN-SNN  
-- Optional Grad-CAM interpretability  
-- Streamlit-based UI
-
-The experimental process involves architecture comparison, hyperparameter tuning, and final evaluation.
+**Disclaimer:** PulmoScope is not a medical device. It is intended solely for academic research and demonstration.
 
 ---
 
-## 2. Figures from the Research Manuscript
+## 2. System Pipeline
 
-### 2.1 Pipeline Overview
 ![Pipeline Overview](assets/figures/pipeline_overview.png)
 
-### 2.2 Waveforms and RMS Envelopes
-
-#### Healthy
-![Healthy Waveform](assets/figures/waveform_healthy.png)
-
-#### COPD
-![COPD Waveform](assets/figures/waveform_copd.png)
-
-#### Pneumonia
-![Pneumonia Waveform](assets/figures/waveform_pneumonia.png)
-
-### 2.3 Spectral Feature Analysis
-![Spectral Boxplots](assets/figures/spectral_boxplots.png)
-
-### 2.4 Model Performance
-
-#### Confusion Matrix
-<div style="display: flex; gap: 10px;">
-  <img src="assets/figures/cm_tcn.png" alt="TCN Confusion Matrix" width="48%">
-  <img src="assets/figures/cm_tcn-snn.png" alt="TCN-SNN Confusion Matrix" width="48%">
-</div>
-
-
-#### ROC Curves
-<div style="display: flex; gap: 10px;">
-  <img src="assets/figures/roc_curves-tcn.png" alt="ROC TCN" width="48%">
-  <img src="assets/figures/roc_curves-tcn-snn.png" alt="ROC TCN-SNN" width="48%">
-</div>
+**Processing stages:**
+1. Lung sound acquisition  
+2. Signal preprocessing  
+3. Mel-spectrogram feature extraction  
+4. Temporal model inference  
+5. Prediction and interpretability  
 
 ---
 
-## 3. Features
+## 3. Dataset and Exploratory Analysis
 
-### Audio Input
-- Upload `.wav` files
-- Record audio in-browser
-
-### AI Models
-- Pure TCN with multi-scale convolution and attention  
-- Hybrid TCN–SNN with spiking neuron activation  
-
-### Output Visualizations
-- Mel-spectrogram  
-- Grad-CAM heatmap  
-- Class probabilities  
-
-### Diagnostic Labels
-
-| Label | Description |
-|-------|-------------|
-| Healthy | Normal respiratory sound pattern |
-| COPD | Wheezes and obstructive airflow |
-| Pneumonia | Crackles and fluid-related abnormalities |
-| Other | Asthma, URTI/LRTI, Bronchiectasis |
+PulmoScope is evaluated using the **ICBHI 2017 Respiratory Sound Database**, containing labeled lung sound recordings across multiple respiratory conditions.
 
 ---
 
@@ -123,28 +96,24 @@ The experimental process involves architecture comparison, hyperparameter tuning
 
 ```
 PulmoScope/
-├── app.py
-├── assets/
-│   ├── banner.png
-│   └── figures/
-│       ├── pipeline_overview.png
-│       ├── waveform_healthy.png
-│       ├── waveform_copd.png
-│       ├── waveform_pneumonia.png
-│       ├── spectral_boxplots.png
-│       ├── confusion_matrix.png
-│       └── roc_curves.png
-├── models/
-│   ├── pure_tcn_weights.pth
-│   └── tcn_snn_weights.pth
-├── utils/
-│   ├── preprocess.py
-│   ├── inference.py
-│   ├── architectures.py
-│   ├── gradcam.py
-│   └── audio_utils.py
-├── requirements.txt
-└── README.md
+├── app.py                            # Streamlit web application entry point
+├── assets/                             
+│   ├── banner.png                    # Application header/banner image
+│   └── figures/                      # Figures used in manuscript and README
+│   ├── slides/                       # PPT slide PNGs for README
+├── models/                           
+│   ├── pure_tcn_config.json          # Pure TCN architecture configuration
+│   ├── tcn_snn_config.json           # Hybrid TCN–SNN architecture configuration
+│   ├── pure_tcn_weights.pth          # Trained Pure TCN model weights
+│   └── tcn_snn_weights.pth           # Trained Hybrid TCN–SNN model weights
+├── utils/                            
+│   ├── preprocess.py                 # Audio loading and mel-spectrogram extraction
+│   ├── inference.py                  # Model loading and prediction logic
+│   ├── architectures.py              # TCN and TCN–SNN model definitions
+│   ├── gradcam.py                    # Grad-CAM attention visualization
+│   └── audio_utils.py                # Audio helper and signal utilities
+├── requirements.txt                  # Python dependencies
+└── README.md                         # Project documentation
 ```
 
 ---
@@ -169,17 +138,17 @@ streamlit run app.py
 
 ---
 
-## 7. Usage
+## 7. Demo Workflow (L.U.N.G Framework)
 
-1. Launch the Streamlit app.
-2. Upload a `.wav` file or record new audio.
-3. PulmoScope performs preprocessing:
-   - Resampling  
-   - Filtering  
-   - Segmentation  
-   - Mel-spectrogram extraction  
-4. Both TCN and TCN-SNN generate predictions.
-5. View probability outputs and optional Grad-CAM heatmaps.
+PulmoScope follows a simple user interaction flow:
+
+- **L** – Load lung sound  
+- **U** – Understand sound patterns using AI  
+- **N** – Notify likely condition  
+- **G** – Guide clinical decision support  
+
+Live demo available at:  
+https://pulmoscope.streamlit.app/
 
 ---
 
