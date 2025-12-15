@@ -90,22 +90,37 @@ PulmoScope is evaluated using the **ICBHI 2017 Respiratory Sound Database**, con
 
 ## 4. Model Architecture
 
-### Pure TCN
+PulmoScope evaluates multiple temporal deep learning architectures for lung sound classification.  
+Recurrent models are included as baselines, while spatio-temporal convolution-based models are selected for final deployment due to superior performance.
+
+### Recurrent Neural Network (RNN) — Baseline
+- Sequential temporal modeling
+- Fully connected recurrent units
+- Captures short-term temporal dependencies
+- Used as an initial baseline for comparison
+
+### Long Short-Term Memory (LSTM) — Baseline
+- Gated recurrent architecture
+- Memory cell with input, forget, and output gates
+- Designed to capture longer temporal dependencies
+- Evaluated as an enhanced recurrent baseline
+
+### Pure Temporal Convolutional Network (TCN)
 - Kernel sizes: 3, 5, 7
-- Dilated convolutions
-- Residual blocks
-- Attention module
+- Dilated convolutions for long-range temporal context
+- Residual blocks for stable deep learning
+- Attention module for temporal feature weighting
 
-### Hybrid TCN–SNN
+### Hybrid Temporal Convolutional Network with Spiking Neural Network (TCN–SNN)
 - Identical TCN backbone
-- Parametric LIF spiking neuron module
-- Sparse temporal activation
-- Attention classifier head
+- Parametric Leaky Integrate-and-Fire (LIF) spiking neuron module
+- Sparse temporal activation for efficient event-driven processing
+- Attention-based classifier head
 
-### Shared Classifier
-- Dense layers: 192 → 128 → 64
+### Shared Classification Head
+- Fully connected layers: 192 → 128 → 64
 - GELU activation
-- Dropout
+- Dropout regularization
 - Softmax output layer
 
 ---
