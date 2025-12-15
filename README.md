@@ -1,58 +1,4 @@
-<!-- ===================== -->
-<!-- HERO / SLIDES SECTION -->
-<!-- ===================== -->
-
-<div align="center" style="
-  background: linear-gradient(135deg, #0f172a, #1e3a8a, #2563eb);
-  padding: 48px 20px;
-  color: white;
-">
-
-<h1 style="margin-bottom: 8px;">PulmoScope</h1>
-
-<p style="max-width: 820px; margin: auto; font-size: 16px;">
-AI-assisted lung sound analysis using temporal deep learning models
-for respiratory disease screening
-</p>
-
-<p style="margin-top: 18px;">
-  <a href="https://pulmoscope.streamlit.app/" style="
-    background: white;
-    color: #1e3a8a;
-    padding: 10px 16px;
-    border-radius: 6px;
-    text-decoration: none;
-    font-weight: 600;
-    margin-right: 6px;
-  ">Live Demo</a>
-
-  <a href="https://tinyurl.com/canvascope" style="
-    background: rgba(255,255,255,0.15);
-    color: white;
-    padding: 10px 16px;
-    border-radius: 6px;
-    text-decoration: none;
-    font-weight: 600;
-    margin-right: 6px;
-  ">Slides</a>
-
-  <a href="assets/manuscript/DL-FINAL-PROJECT-PULMOSCOPE.pdf" style="
-    background: rgba(255,255,255,0.15);
-    color: white;
-    padding: 10px 16px;
-    border-radius: 6px;
-    text-decoration: none;
-    font-weight: 600;
-  ">Manuscript</a>
-</p>
-
-</div>
-
-<!-- ===================== -->
-<!-- SLIDE PREVIEW SECTION -->
-<!-- ===================== -->
-
-<p align="center" style="margin-top: 36px;">
+<p align="center">
   <img src="assets/slides/1_title.png" width="90%">
   <img src="assets/slides/2_problem.png" width="90%">
   <img src="assets/slides/3_gaps.png" width="90%">
@@ -82,21 +28,42 @@ for respiratory disease screening
 
 ---
 
-<!-- ===================== -->
-<!-- CONTENT SECTION WRAP -->
-<!-- ===================== -->
+# PulmoScope — AI-Assisted Lung Sound Analysis  
+![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
+![Streamlit](https://img.shields.io/badge/Framework-Streamlit-FF4B4B)
+![Deep Learning](https://img.shields.io/badge/AI-TCN%20%7C%20TCN--SNN-green)
+![License](https://img.shields.io/badge/License-Academic-lightgrey)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-<div style="
-  background: linear-gradient(180deg, #f8fafc, #ffffff);
-  padding: 36px 22px;
-">
+### Live Demo: https://pulmoscope.streamlit.app/
+### Full Manuscript, Slides, and Supporting Notebooks
+
+The complete research materials for PulmoScope are provided below for reference, transparency, and reproducibility.
+
+**Slide Presentation**
+- [PulmoScope Project Slides](https://tinyurl.com/canvascope)
+
+**Manuscript**
+- [DL-FINAL-PROJECT-PULMOSCOPE.pdf](assets/manuscript/DL-FINAL-PROJECT-PULMOSCOPE.pdf)
+
+**Exploratory and Model Analysis Notebooks**
+- [EDA_Pulmoscope.ipynb](assets/notebooks/EDA_Pulmoscope.ipynb) — exploratory data analysis and feature inspection  
+- [PulmoScope.ipynb](assets/notebooks/PulmoScope.ipynb) — model development and experimentation  
+
+---
 
 ## 1. Project Overview
 
 PulmoScope is a **deep-learning–based assistive system** for analyzing lung auscultation sounds and classifying respiratory conditions.  
-The system is designed to support clinical screening by leveraging **temporal deep learning models** for disease-level lung sound classification.It compares two architectures:
+The system supports clinical screening by leveraging **temporal sequence modeling** for disease-level lung sound classification.
+
+Multiple deep learning architectures were evaluated during development, including:
+- **Recurrent Neural Network (RNN)**
+- **Long Short-Term Memory (LSTM)**
 - **Pure Temporal Convolutional Network (TCN)**
 - **Hybrid Temporal Convolutional Network with Spiking Neural Network (TCN–SNN)**
+
+Experimental results demonstrated that **spatio-temporal convolution–based models (TCN and TCN–SNN)** achieved superior performance compared to recurrent baselines, leading to their selection for final deployment and comparison.
 
 **Disclaimer:** PulmoScope is not a medical device. It is intended solely for academic research and demonstration.
 
@@ -231,5 +198,3 @@ PulmoScope was developed by:
 This project is intended solely for academic research and educational purposes. It is not approved for clinical use.
 
 This project is open source and available under the [MIT License](LICENSE).
-
-</div>
