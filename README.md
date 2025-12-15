@@ -36,9 +36,12 @@
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 ### Live Demo: https://pulmoscope.streamlit.app/
-### Full Manuscript and Supporting Notebooks
+### Full Manuscript, Slides, and Supporting Notebooks
 
-The complete research manuscript and supporting analysis notebooks are included in this repository.
+The complete research materials for PulmoScope are provided below for reference, transparency, and reproducibility.
+
+**Slide Presentation**
+- [PulmoScope Project Slides](https://tinyurl.com/canvascope)
 
 **Manuscript**
 - [DL-FINAL-PROJECT-PULMOSCOPE.pdf](assets/manuscript/DL-FINAL-PROJECT-PULMOSCOPE.pdf)
