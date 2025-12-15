@@ -38,14 +38,14 @@
 ### Live Demo: https://pulmoscope.streamlit.app/
 ### Full Manuscript and Supporting Notebooks
 
-The complete research manuscript and supporting analysis notebooks are included in this repository for transparency and reproducibility.
+The complete research manuscript and supporting analysis notebooks are included in this repository.
 
 **Manuscript**
-- `assets/manuscript/DL-FINAL-PROJECT-PULMOSCOPE.pdf`
+- [DL-FINAL-PROJECT-PULMOSCOPE.pdf](assets/manuscript/DL-FINAL-PROJECT-PULMOSCOPE.pdf)
 
 **Exploratory and Model Analysis Notebooks**
-- `assets/notebooks/EDA_Pulmoscope.ipynb` — exploratory data analysis and feature inspection  
-- `assets/notebooks/PulmoScope.ipynb` — model development and experimentation
+- [EDA_Pulmoscope.ipynb](assets/notebooks/EDA_Pulmoscope.ipynb) — exploratory data analysis and feature inspection  
+- [PulmoScope.ipynb](assets/notebooks/PulmoScope.ipynb) — model development and experimentation  
 
 ---
 
