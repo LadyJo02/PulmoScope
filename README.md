@@ -36,7 +36,16 @@
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 ### Live Demo: https://pulmoscope.streamlit.app/
-### Full Manuscript : https://tinyurl.com/pulmoscope
+### Full Manuscript and Supporting Notebooks
+
+The complete research manuscript and supporting analysis notebooks are included in this repository for transparency and reproducibility.
+
+**Manuscript**
+- `assets/manuscript/DL-FINAL-PROJECT-PULMOSCOPE.pdf`
+
+**Exploratory and Model Analysis Notebooks**
+- `assets/notebooks/EDA_Pulmoscope.ipynb` — exploratory data analysis and feature inspection  
+- `assets/notebooks/PulmoScope.ipynb` — model development and experimentation
 
 ---
 
